@@ -13,7 +13,7 @@ const typeColors = {
   ground: 'bg-amber-500',
   rock: 'bg-stone-500',
   bug: 'bg-lime-500',
-  ghost: 'bg-indigo-500',
+  ghost: 'bg-indigo-700 text-white',
   psychic: 'bg-pink-500',
   ice: 'bg-cyan-500',
   dragon: 'bg-fuchsia-500',
@@ -29,7 +29,7 @@ const PokemonComponent = () => {
     const fetchPokemonData = async () => {
       try {
         const response = await axios.get(
-          'https://pokeapi.co/api/v2/pokemon?limit=100'
+          'https://pokeapi.co/api/v2/pokemon?limit=151'
         );
         const pokemonUrls = response.data.results.map((pokemon) => pokemon.url);
         const pokemonResponses = await axios.all(

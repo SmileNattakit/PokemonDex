@@ -27,7 +27,7 @@ const typeColors = {
 const PokemonComponent = () => {
   const { register, handleSubmit } = useForm();
   const [filteredPokemonList, setFilteredPokemonList] = useState([]);
-  const [none, setNone] = useState(false);
+  const [sortOrder, setSortOrder] = useState('asc');
 
   const {
     isLoading,
@@ -58,45 +58,70 @@ const PokemonComponent = () => {
   }, [pokemonList]);
 
   const onSubmit = (data) => {
-    const filtered = pokemonList.filter((pokemon) =>
+    let filtered = pokemonList.filter((pokemon) =>
       pokemon.name.toLowerCase().includes(data.search.toLowerCase())
     );
-    setFilteredPokemonList(filtered);
 
-    const hasMatchingPokemon = filtered.length > 0;
-    setNone(!hasMatchingPokemon);
+    filtered = filtered.sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.id - b.id;
+      } else {
+        return b.id - a.id;
+      }
+    });
+
+    setFilteredPokemonList(filtered);
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    onSubmit({ search: '' });
   };
 
   if (isLoading) {
     return (
-      <div className="w-[100vw] h-[40vw]  flex justify-center items-center">
-        <span className="loading loading-spinner loading-lg  text-2xl flex justify-center items-center"></span>
+      <div className="w-full h-screen flex justify-center items-center bg-gray-100">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-xl font-semibold text-gray-700">กำลังโหลดข้อมูล Pokemon...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <div>เกิดข้อผิดพลาด: {error.message}</div>;
+    return (
+      <div className="w-full h-screen flex justify-center items-center bg-gray-100">
+        <div className="text-center text-red-600">
+          <p className="text-2xl font-bold">เกิดข้อผิดพลาด</p>
+          <p className="mt-2">{error.message}</p>
+        </div>
+      </div>
+    );
   }
 
-  const PokemonCard = ({ pokemon, index }) => (
+  const PokemonCard = ({ pokemon }) => (
     <li key={pokemon.name} className="m-4">
-      <div className="card card-compact w-50 bg-base-100 shadow-xl">
-        <p className="text-xl font-semibold px-4">
-          #{String(index + 1).padStart(3, '0')}
-        </p>
-        <figure>
-          <img src={pokemon.sprites.front_default} alt={pokemon.name} />
-        </figure>
+      <div className="card card-compact w-full bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 overflow-hidden">
+        <div className="relative">
+          <span className="absolute top-2 left-2 bg-gray-800 text-white px-2 py-1 rounded-full text-sm">
+            #{String(pokemon.id).padStart(3, '0')}
+          </span>
+          <img
+            src={pokemon.sprites.front_default}
+            alt={pokemon.name}
+            className="w-full h-48 object-contain bg-gray-100"
+          />
+        </div>
         <div className="card-body">
-          <h2 className="card-title">{pokemon.name}</h2>
-          <div>
+          <h2 className="card-title text-lg capitalize">{pokemon.name}</h2>
+          <div className="flex flex-wrap gap-1 mt-2">
             {pokemon.types.map((type) => (
               <span
                 key={type.type.name}
                 className={`badge ${
                   typeColors[type.type.name] || 'bg-gray-500'
-                }`}
+                } text-xs px-2 py-1`}
               >
                 {type.type.name}
               </span>
@@ -108,41 +133,54 @@ const PokemonComponent = () => {
   );
 
   return (
-    <div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <label className="input input-bordered flex items-center gap-2 my-5 mx-4 ">
-          <input
-            type="text"
-            className="grow "
-            placeholder="Search"
-            {...register('search')}
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="w-4 h-4 opacity-70"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-              clipRule="evenodd"
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-8">Pokédex</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full sm:w-auto mb-4 sm:mb-0">
+          <label className="input input-bordered flex items-center gap-2">
+            <input
+              type="text"
+              className="grow"
+              placeholder="ค้นหา Pokemon"
+              {...register('search')}
             />
-          </svg>
-        </label>
-      </form>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              className="w-4 h-4 opacity-70"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </label>
+        </form>
+        <button
+          onClick={toggleSortOrder}
+          className="btn btn-outline btn-primary"
+        >
+          เรียงตามหมายเลข {sortOrder === 'asc' ? '↑' : '↓'}
+        </button>
+      </div>
 
-      <ul className="grid grid-cols-6">
-        {filteredPokemonList.length > 0 ? (
-          filteredPokemonList.map((pokemon, index) => (
-            <PokemonCard key={pokemon.name} pokemon={pokemon} index={index} />
-          ))
-        ) : none ? (
-          <div className="text-center mt-4 w-[100vw] h-[40vw] text-2xl flex justify-center items-center">
-            ไม่พบข้อมูล Pokemon ที่ตรงกัน
-          </div>
-        ) : null}
-      </ul>
+      {filteredPokemonList.length > 0 ? (
+        <div>
+          <p className="text-lg mb-4">พบ {filteredPokemonList.length} รายการ</p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {filteredPokemonList.map((pokemon) => (
+              <PokemonCard key={pokemon.name} pokemon={pokemon} />
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="text-center mt-16">
+          <p className="text-2xl font-semibold text-gray-600">ไม่พบข้อมูล Pokemon ที่ตรงกัน</p>
+          <p className="mt-2 text-gray-500">ลองค้นหาด้วยชื่ออื่น หรือตรวจสอบการสะกดอีกครั้ง</p>
+        </div>
+      )}
     </div>
   );
 };
